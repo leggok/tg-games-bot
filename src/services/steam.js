@@ -7,14 +7,10 @@ async function getSteam() {
       const response = await axios.get(url);
       const data = response.data;
   
-      const freeGames = data.specials.items.filter(game => game.final_price === 0);
+      const freeGames = data.specials.items.filter(game => game.final_price === 599);
+      const preparedGames = freeGames.map(game => `<a href="https://store.steampowered.com/app/${game.id}/"> ${game.name}</a>`);
   
-    //   freeGames.forEach(game => {
-    //     console.log(`steam Title: ${game.name}`);
-    //     console.log(`URL: https://store.steampowered.com/app/${game.id}`);
-    //     console.log('---');
-    //   });
-      return freeGames;
+      return preparedGames;
     } catch (error) {
       console.error('Error fetching free games:', error);
       return 'Failed to fetch free games. Please try again later.';
