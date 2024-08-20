@@ -11,7 +11,7 @@ const bot = new TelegramBot(token, { polling: true });
 
 async function getFreeGames() {
 	const completeList = [];
-	
+
 	const epicGames = await getEpicGames();
 	if (epicGames.length > 0) {
 		completeList.push(...epicGames)

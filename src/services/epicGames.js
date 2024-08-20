@@ -9,7 +9,13 @@ async function getEpicGames() {
 			return game.promotions && game.promotions.promotionalOffers.length > 0;
         });
         
-        return freeGames.map(game => `<a href="https://store.epicgames.com/en-US/p/${game.offerMappings[0].pageSlug}/"> ${game.title}</a>`);
+        return freeGames.map(game => {
+			let gameString = /*html*/`<b>EpicGames Store</b>\n\n<a href="https://store.epicgames.com/en-US/p/${game.offerMappings[0].pageSlug}/">${game.title}</a>`
+			if (game.description.length > 0) {
+				return `${gameString}\n\n${game.description}`;
+			}
+			return gameString
+		})
       } catch (error) {
         console.error('Error fetching free games:', error);
         return 'Failed to fetch free games. Please try again later.';
