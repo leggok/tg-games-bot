@@ -16,7 +16,6 @@ async function getGOG() {
             games.push({ title, url });
         });
 
-        console.log(games);
         return games.map(game => `GOG Store\n<a href="${game.url}"> ${game.title}</a>`);;
     } catch (error) {
         console.error('Error fetching games:', error);

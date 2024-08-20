@@ -44,7 +44,7 @@ bot.on('message', async (msg) => {
 		bot.sendMessage(chatId, 'Welcome to the bot!');
 	} else if (messageText === '/freegames') {
 		const freeGamesList = await getFreeGames();
-		console.log('freeGamesList',freeGamesList);
+
 		if (freeGamesList.length > 0) {
 			freeGamesList.forEach(game => {
 				bot.sendMessage(chatId, game, { parse_mode: 'HTML' });
