@@ -4,19 +4,49 @@ import * as cheerio from 'cheerio';
 async function getGOG() {
     try {
         // const { data } = await axios.get('https://www.gog.com/games?price=free&sort=popularity');
-        const { data } = await axios.get('https://www.gog.com/en/games?priceRange=0,0&discounted=true');
+        const { data } = await axios.get(
+            'https://www.gog.com/en/games?priceRange=0,0&discounted=true'
+        );
         const $ = cheerio.load(data);
 
         const games = [];
 
         $('.product-tile').each((index, element) => {
-            const title = $(element).find('.product-tile__title').attr('title').trim();
+            const title = $(element)
+                .find('.product-tile__title')
+                .attr('title')
+                .trim();
             const url = $(element).attr('href');
-            
+
             games.push({ title, url });
         });
 
-        return games.map(game => `GOG Store\n<a href="${game.url}"> ${game.title}</a>`);;
+        for (let game of games) {
+            try {
+                console.log('url', game.url);
+
+                const { data } = await axios.get(game.url);
+
+                const $ = cheerio.load(data);
+
+                game.description = $('.layout-main-col .description')
+                    .text()
+                    .trim();
+                console.log('description', game.description);
+            } catch (error) {
+                console.log('error', error);
+                game.description = false;
+            }
+        }
+
+        console.log('games', games);
+
+        return games.map((game) => {
+            let gameString = /*html*/ `<b>GOG Store</b>\n\n<a href="${game.url}">${game.title}</a>`;
+            if (game.description && game.description.length > 0) {
+                return `${gameString}\n\n${game.description}`;
+            }
+        });
     } catch (error) {
         console.error('Error fetching games:', error);
     }
