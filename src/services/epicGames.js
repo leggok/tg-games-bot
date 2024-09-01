@@ -26,7 +26,7 @@ async function getEpicGames() {
                         : 'p'
                 }/${game.urlSlug}/">${game.title}</a>`;
                 if (game.description.length > 0) {
-                    return `${gameString}\n\n${game.description}`;
+                    gameString = `${gameString}\n\n${game.description}`;
                 }
                 return gameString;
             }

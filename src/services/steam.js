@@ -26,23 +26,25 @@ async function getSteam() {
         const data = response.data;
 
         const freeGames = data.specials.items.filter(
-            (game) => game.discount_percent === 80
+            (game) => game.discount_percent > 80
         );
 
         // Fetch additional details for each game
         if (freeGames.length > 0) {
-            const preparedGames = await Promise.all(
+            return await Promise.all(
                 freeGames.map(async (game) => {
                     const gameDetails = await getGameDetails(game.id);
-                    if (gameDetails) {
-                        const { name, short_description } = gameDetails;
-                        return `Steam Store\n\n<a href="https://store.steampowered.com/app/${game.id}/">${name}</a>\n\n${short_description}`;
-                    } else {
-                        return `Steam Store\n\n<a href="https://store.steampowered.com/app/${game.id}/">${game.name}</a>`;
+                    let gameString = `Steam Store\n\n<a href="https://store.steampowered.com/app/${
+                        game.id
+                    }/">${gameDetails?.name || game.name}</a>`;
+
+                    if (gameDetails && gameDetails.short_description) {
+                        gameString = `${gameString}\n\n${gameDetails.short_description}`;
                     }
+
+                    return gameString;
                 })
             );
-            return preparedGames;
         } else {
             return [];
         }

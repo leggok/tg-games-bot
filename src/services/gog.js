@@ -44,8 +44,9 @@ async function getGOG() {
         return games.map((game) => {
             let gameString = /*html*/ `<b>GOG Store</b>\n\n<a href="${game.url}">${game.title}</a>`;
             if (game.description && game.description.length > 0) {
-                return `${gameString}\n\n${game.description}`;
+                gameString = `${gameString}\n\n${game.description}`;
             }
+            return gameString;
         });
     } catch (error) {
         console.error('Error fetching games:', error);
