@@ -25,7 +25,7 @@ async function getGameDetails(appid) {
 
 async function getSteam(discount = 100) {
     console.log('discount', discount);
-
+    if (discount === null) discount = 100;
     try {
         const response = await axios.get(STEAM_API_URL, {
             params: {

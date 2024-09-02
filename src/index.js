@@ -48,7 +48,7 @@ async function sendGames(platform, chatId, discount = null) {
 bot.onText(/\/start/, (msg) => {
     bot.sendMessage(msg.chat.id, 'You need games?', {
         reply_markup: {
-            keyboard: [['With discount'], ['Totally free'], ['Step Back']],
+            keyboard: [['Choose Platform']],
         },
     });
 });
@@ -63,94 +63,110 @@ bot.on('message', async (msg) => {
         userSessions[chatId] = {};
     }
 
-    if (messageText.includes('totally free')) {
+    if (messageText === 'choose platform') {
         userSessions[chatId].state = 'select_platform'; // Track state
         await bot.sendMessage(chatId, 'Choose a platform:', {
             reply_markup: {
-                keyboard: [
-                    ['Steam', 'Epic Games', 'GOG'],
-                    ['All'],
-                    ['Step Back'],
-                ],
+                keyboard: [['Steam', 'Epic Games', 'GOG'], ['Step Back']],
             },
         });
-    } else if (messageText.includes('with discount')) {
-        userSessions[chatId].state = 'select_discount'; // Track state
-        await bot.sendMessage(chatId, 'Discount should be more than:', {
-            reply_markup: {
-                keyboard: [
-                    ['40%', '50%', '75%', '90%'],
-                    ['Any'],
-                    ['Step Back'],
-                ],
-            },
-        });
-    } else if (userSessions[chatId].state === 'select_discount') {
+    } else if (userSessions[chatId].state === 'select_platform') {
         if (messageText.includes('step back')) {
             userSessions[chatId].state = 'initial'; // Go back to initial state
             await bot.sendMessage(chatId, 'You need games?', {
                 reply_markup: {
-                    keyboard: [
-                        ['With discount'],
-                        ['Totally free'],
-                        ['Step Back'],
-                    ],
-                },
-            });
-        } else {
-            userSessions[chatId].discount = messageText; // Store discount choice
-            userSessions[chatId].state = 'select_platform'; // Set state to platform selection
-            await bot.sendMessage(chatId, 'Choose a platform:', {
-                reply_markup: {
-                    keyboard: [
-                        ['Steam', 'Epic Games', 'GOG'],
-                        ['All'],
-                        ['Step Back'],
-                    ],
-                },
-            });
-        }
-    } else if (userSessions[chatId].state === 'select_platform') {
-        if (messageText.includes('step back')) {
-            userSessions[chatId].state = 'select_discount'; // Go back to discount selection
-            await bot.sendMessage(chatId, 'Discount should be more than:', {
-                reply_markup: {
-                    keyboard: [
-                        ['40%', '50%', '75%', '90%'],
-                        ['Any'],
-                        ['Step Back'],
-                    ],
+                    keyboard: [['Choose Platform']],
                 },
             });
         } else {
             const platform = messageText.replace(' ', '').toLowerCase();
-            const discount =
-                Number(userSessions[chatId].discount?.replaceAll('%', '')) ||
-                100; // Retrieve discount choice
-            await sendGames(platform, chatId, discount);
-            userSessions[chatId] = {}; // Clear session after processing
+            userSessions[chatId].platform = platform; // Store selected platform
+            userSessions[chatId].state = 'select_filter'; // Set state to filter selection
+            await bot.sendMessage(chatId, 'Choose a filter:', {
+                reply_markup: {
+                    keyboard: [['Free', 'With Discount'], ['Step Back']],
+                },
+            });
         }
+    } else if (userSessions[chatId].state === 'select_filter') {
+        if (messageText.includes('step back')) {
+            userSessions[chatId].state = 'select_platform'; // Go back to platform selection
+            await bot.sendMessage(chatId, 'Choose a platform:', {
+                reply_markup: {
+                    keyboard: [['Steam', 'Epic Games', 'GOG'], ['Step Back']],
+                },
+            });
+        } else if (messageText === 'free') {
+            const platform = userSessions[chatId].platform;
+            await sendGames(platform, chatId);
+            userSessions[chatId] = {}; // Clear session after processing
+        } else if (messageText === 'with discount') {
+            userSessions[chatId].state = 'select_discount'; // Set state to discount selection
+            const platform = userSessions[chatId].platform;
+            const discountOptions =
+                platform === 'gog'
+                    ? ['Max Price']
+                    : ['40%', '50%', '75%', '90%'];
+            await bot.sendMessage(chatId, `Choose discount for ${platform}:`, {
+                reply_markup: {
+                    keyboard: [
+                        ...discountOptions.map((option) => [option]),
+                        ['Step Back'],
+                    ],
+                },
+            });
+        }
+    } else if (userSessions[chatId].state === 'select_discount') {
+        if (messageText.includes('step back')) {
+            userSessions[chatId].state = 'select_filter'; // Go back to filter selection
+            await bot.sendMessage(chatId, 'Choose a filter:', {
+                reply_markup: {
+                    keyboard: [['Free', 'With Discount'], ['Step Back']],
+                },
+            });
+        } else {
+            const platform = userSessions[chatId].platform;
+            if (platform === 'gog' && messageText === 'max price') {
+                userSessions[chatId].discount = null; // Max price will be typed
+                await bot.sendMessage(chatId, 'Enter the maximum price in $:', {
+                    reply_markup: {
+                        keyboard: [['Step Back']],
+                    },
+                });
+            } else {
+                userSessions[chatId].discount = messageText.replace('%', ''); // Store discount choice
+                const discount = Number(userSessions[chatId].discount) || null;
+                await sendGames(platform, chatId, discount);
+                userSessions[chatId] = {}; // Clear session after processing
+            }
+        }
+    } else if (
+        messageText.match(/^\d+$/) &&
+        userSessions[chatId].state === 'select_discount'
+    ) {
+        // Handle max price for GOG
+        const platform = userSessions[chatId].platform;
+        const maxPrice = parseInt(messageText, 10);
+        await sendGames(platform, chatId, maxPrice);
+        userSessions[chatId] = {}; // Clear session after processing
     } else if (messageText.includes('step back')) {
-        // Handle "Step Back" from initial state or other contexts
         if (userSessions[chatId].state === 'initial') {
             await bot.sendMessage(chatId, 'You need games?', {
                 reply_markup: {
-                    keyboard: [
-                        ['With discount'],
-                        ['Totally free'],
-                        ['Step Back'],
-                    ],
+                    keyboard: [['Choose Platform']],
+                },
+            });
+        } else if (userSessions[chatId].state === 'select_platform') {
+            await bot.sendMessage(chatId, 'You need games?', {
+                reply_markup: {
+                    keyboard: [['Choose Platform']],
                 },
             });
         } else {
             userSessions[chatId].state = 'initial'; // Go back to initial state
             await bot.sendMessage(chatId, 'You need games?', {
                 reply_markup: {
-                    keyboard: [
-                        ['With discount'],
-                        ['Totally free'],
-                        ['Step Back'],
-                    ],
+                    keyboard: [['Choose Platform']],
                 },
             });
         }

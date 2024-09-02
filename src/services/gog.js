@@ -1,11 +1,16 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
-async function getGOG() {
+async function getGOG(discount = null) {
     try {
         // const { data } = await axios.get('https://www.gog.com/games?price=free&sort=popularity');
         const { data } = await axios.get(
-            'https://www.gog.com/en/games?priceRange=0,0&discounted=true'
+            'https://www.gog.com/en/games?priceRange=0,69',
+            {
+                params: {
+                    discounted: 'true', // Set the country code to Ukraine
+                },
+            }
         );
         const $ = cheerio.load(data);
 
