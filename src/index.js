@@ -33,10 +33,6 @@ async function sendGames(platform, chatId, discount = null) {
 
     if (gamesList.length > 0) {
         for (let game of gamesList) {
-            if (discount) {
-                // Modify the game message based on discount if needed
-                game += `\nDiscount: ${discount}`;
-            }
             await bot.sendMessage(chatId, game, { parse_mode: 'HTML' });
         }
     } else {
@@ -128,7 +124,9 @@ bot.on('message', async (msg) => {
             });
         } else {
             const platform = messageText.replace(' ', '').toLowerCase();
-            const discount = userSessions[chatId].discount; // Retrieve discount choice
+            const discount =
+                Number(userSessions[chatId].discount?.replaceAll('%', '')) ||
+                100; // Retrieve discount choice
             await sendGames(platform, chatId, discount);
             userSessions[chatId] = {}; // Clear session after processing
         }
